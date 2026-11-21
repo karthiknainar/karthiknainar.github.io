@@ -1,0 +1,6 @@
+---
+title: "About"
+---
+
+I am a control engineer working on electrical equipment for wind turbines.
+I write about control theory, MATLAB and Simulink.

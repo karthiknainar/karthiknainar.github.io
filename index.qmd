@@ -1,0 +1,9 @@
+---
+title: "Karthikeyan Nainar"
+subtitle: "Notes on control engineering"
+listing:
+  contents: posts
+  type: table
+  fields: [date, title]
+  sort: "date desc"
+---

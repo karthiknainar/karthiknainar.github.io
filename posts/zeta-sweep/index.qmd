@@ -1,0 +1,16 @@
+---
+title: "What does ζ actually do? A pole placement sweep in MATLAB"
+date: 2026-11-20
+---
+
+For a double integrator with state feedback, the desired closed-loop polynomial is
+
+$$s^2 + 2\zeta\omega_n s + \omega_n^2$$
+
+and matching coefficients gives $K = [\omega_n^2,\ 2\zeta\omega_n]$.
+
+```matlab
+A = [0 1; 0 0]; B = [0; 1];
+p = roots([1 2*0.8*3 9]);
+K = place(A, B, p)
+```
