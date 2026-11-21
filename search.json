@@ -1,0 +1,23 @@
+[
+  {
+    "objectID": "posts/zeta-sweep/index.html",
+    "href": "posts/zeta-sweep/index.html",
+    "title": "What does ζ actually do? A pole placement sweep in MATLAB",
+    "section": "",
+    "text": "For a double integrator with state feedback, the desired closed-loop polynomial is\n\\[s^2 + 2\\zeta\\omega_n s + \\omega_n^2\\]\nand matching coefficients gives \\(K = [\\omega_n^2,\\ 2\\zeta\\omega_n]\\).\nA = [0 1; 0 0]; B = [0; 1];\np = roots([1 2*0.8*3 9]);\nK = place(A, B, p)"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "I am a control engineer working on electrical equipment for wind turbines. I write about control theory, MATLAB and Simulink."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Karthikeyan Nainar",
+    "section": "",
+    "text": "Order By\n      Default\n      \n        Date - Oldest\n      \n      \n        Date - Newest\n      \n      \n        Title\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\n\nDate\n\n\n\nTitle\n\n\n\n\n\n\n\n\nNov 20, 2026\n\n\nWhat does ζ actually do? A pole placement sweep in MATLAB\n\n\n\n\n\n\nNo matching items"
+  }
+]
