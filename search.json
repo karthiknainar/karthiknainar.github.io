@@ -2,9 +2,51 @@
   {
     "objectID": "posts/zeta-sweep/index.html",
     "href": "posts/zeta-sweep/index.html",
-    "title": "What does ζ actually do? A pole placement sweep in MATLAB",
+    "title": "How Damping Ratio affects Overshoot?",
     "section": "",
-    "text": "For a double integrator with state feedback, the desired closed-loop polynomial is\n\\[s^2 + 2\\zeta\\omega_n s + \\omega_n^2\\]\nand matching coefficients gives \\(K = [\\omega_n^2,\\ 2\\zeta\\omega_n]\\).\nA = [0 1; 0 0]; B = [0; 1];\np = roots([1 2*0.8*3 9]);\nK = place(A, B, p)"
+    "text": "A simple second-order system, four damping ratios, and overshoots of the system reveal something interesting!\nEvery control course teaches \\(\\zeta\\), the damping ratio. Fewer courses show you what it does on a plant you can simulate in ten lines. So let’s do that."
+  },
+  {
+    "objectID": "posts/zeta-sweep/index.html#the-plant",
+    "href": "posts/zeta-sweep/index.html#the-plant",
+    "title": "How Damping Ratio affects Overshoot?",
+    "section": "The plant",
+    "text": "The plant\nLet us consider a simple second order system: a double integrator whose transfer function is provided in Equation 1,\n\\[\nG(s) = \\frac{1}{s^2}\n\\tag{1}\\]\nThis system behaves like a mass driven by a force: the state variable, position is the integral of velocity, and velocity is the integral of applied force. As no friction is assumed, this system never settles. Note that both poles of this system are located at the origin.\nIn state-space form, let the state variable be \\(x = \\begin{bmatrix} x_1 & x_2 \\end{bmatrix}^{\\top}\\), where \\(x_1\\) be the position, \\(x_2 = \\dot x_1\\) be the velocity, \\(u\\) be the applied force, which causes acceleration (\\(\\dot x_2\\)) of the mass, and the output \\(y\\) be the position (\\(x_1\\)).\n\\[\n\\begin{bmatrix} \\dot{x_1} \\\\ \\dot{x_2} \\end{bmatrix} = \\begin{bmatrix} 0 & 1 \\\\ 0 & 0 \\end{bmatrix} \\begin{bmatrix} x_1 \\\\ x_2 \\end{bmatrix} + \\begin{bmatrix} 0 \\\\ 1 \\end{bmatrix} u\n\\tag{2}\\]\n\\[\ny = \\begin{bmatrix} 1 & 0 \\end{bmatrix} \\begin{bmatrix} x_1 \\\\ x_2 \\end{bmatrix}\n\\tag{3}\\]\nThe state-space matrices are provided in Equation 4\n\\[\nA = \\begin{bmatrix} 0 & 1 \\\\ 0 & 0 \\end{bmatrix},\\quad\nB = \\begin{bmatrix} 0 \\\\ 1 \\end{bmatrix},\\quad\nC = \\begin{bmatrix} 1 & 0 \\end{bmatrix}.\n\\tag{4}\\]"
+  },
+  {
+    "objectID": "posts/zeta-sweep/index.html#the-controller",
+    "href": "posts/zeta-sweep/index.html#the-controller",
+    "title": "How Damping Ratio affects Overshoot?",
+    "section": "The controller",
+    "text": "The controller\nLet us apply state feedback control on Equation 1, \\(u = -Kx\\), in which position and velocity are measured and used as feedback signals. The block diagram of this control scheme is provided in Figure 1. The closed-loop poles become the eigenvalues of \\((A - BK)\\). The system is controllable, which can be checked by the controllability matrix \\(\\begin{bmatrix} B & AB \\end{bmatrix}\\) has full rank (\\(2\\)). Because the plant is controllable, \\(K\\) can be chosen to put the poles at any desired place.\n\n\n\n\n\n\nFigure 1: Block diagram of state feedback control.\n\n\n\nFor \\(K = [k_1\\ \\ k_2]\\) the closed-loop characteristic polynomial is\n\\[\n\\det\\bigl(sI - (A - BK)\\bigr) = s^2 + k_2 s + k_1 .\n\\]\nFor a target natural frequency \\(\\omega_n\\) and damping ratio \\(\\zeta\\), the desired polynomial is \\(s^2 + 2\\zeta\\omega_n s + \\omega_n^2\\). Matching coefficients gives\n\\[\nK = \\begin{bmatrix} \\omega_n^2 & 2\\zeta\\omega_n \\end{bmatrix}\n\\tag{5}\\]\nThe first gain acts like stiffness and the second like damping.\nA feed-forward gain \\(N = k_1\\) is added so that the step response settles at the reference value set by \\(r\\) rather than \\(1/\\omega_n^2\\)."
+  },
+  {
+    "objectID": "posts/zeta-sweep/index.html#the-experiment",
+    "href": "posts/zeta-sweep/index.html#the-experiment",
+    "title": "How Damping Ratio affects Overshoot?",
+    "section": "The experiment",
+    "text": "The experiment\nLet us fix \\(\\omega_n = 3\\) rad/s and sweep \\(\\zeta = 0.3,\\ 0.8,\\ 1.0\\) and \\(1.2\\). The full script is on GitHub: https://github.com/karthiknainar/karthiknainar.github.io/tree/main/posts/zeta-sweep\nA = [0 1; 0 0]; B = [0; 1]; C = [1 0]; D = 0;\nwn = 3;\nfor zeta = [0.3 0.8 1.0 1.2]\n    p = roots([1 2*zeta*wn wn^2]);\n    K = place(A, B, p);\n    sys_cl = ss(A - B*K, B*K(1), C, D);\n    info = stepinfo(sys_cl);\n    fprintf('zeta=%.1f  OS=%.1f%%  Ts=%.2fs\\n', ...\n        zeta, info.Overshoot, info.SettlingTime);\nend\n\n\n\n\n\n\nFigure 2: Closed-loop step responses for \\(\\zeta = 0.3, 0.8, 1.0, 1.2\\) at \\(\\omega_n = 3\\) rad/s."
+  },
+  {
+    "objectID": "posts/zeta-sweep/index.html#the-results",
+    "href": "posts/zeta-sweep/index.html#the-results",
+    "title": "How Damping Ratio affects Overshoot?",
+    "section": "The results",
+    "text": "The results\n\n\n\n\\(\\zeta\\)\nPoles\nOvershoot\nSettling time (2%)\n\n\n\n\n0.3\n\\(-0.9 \\pm j\\,2.86\\)\n\\(\\approx 37\\%\\)\n3.74 s\n\n\n0.8\n\\(-2.4 \\pm j\\,1.8\\)\n\\(\\approx 1.5\\%\\)\n1.25 s\n\n\n1.0\n\\(-3,\\ -3\\)\n0%\n1.94 s\n\n\n1.2\n\\(-1.61,\\ -5.59\\)\n0%\n2.64 s\n\n\n\nFor an underdamped second-order system with no zeros, the overshoot is\n\\[\n\\text{OS} = \\exp\\!\\left(\\frac{-\\pi\\zeta}{\\sqrt{1-\\zeta^2}}\\right).\n\\]"
+  },
+  {
+    "objectID": "posts/zeta-sweep/index.html#what-the-numbers-say",
+    "href": "posts/zeta-sweep/index.html#what-the-numbers-say",
+    "title": "How Damping Ratio affects Overshoot?",
+    "section": "What the numbers say",
+    "text": "What the numbers say\n\n\\(\\zeta = 0.3\\) rings. The poles sit close to the imaginary axis, so the response overshoots heavily and takes a long time to die out.\n\\(\\zeta = 0.8\\) is the sweet spot here: small overshoot and the fastest settling of the four.\n\\(\\zeta = 1.0\\) has no overshoot, but it is slower than \\(\\zeta = 0.8\\). The poles are real and repeated at \\(-3.0\\).\n\\(\\zeta = 1.2\\) has no overshoot, but it is slower than \\(\\zeta = 1.0\\). The poles are real, and the slow one at \\(-1.61\\) dominates the response. More damping is not always better.\n\nNotice that \\(0.707\\) is not critical damping. Critical damping is \\(\\zeta = 1\\). The value \\(0.707\\) is where the frequency response loses its resonance peak, which gives roughly 4% overshoot. This is the reason it is a popular design target."
+  },
+  {
+    "objectID": "posts/zeta-sweep/index.html#the-takeaway",
+    "href": "posts/zeta-sweep/index.html#the-takeaway",
+    "title": "How Damping Ratio affects Overshoot?",
+    "section": "The takeaway",
+    "text": "The takeaway\nDamping is a trade-off, not a quality score. Moving the poles changes overshoot and speed together, and the right choice depends on what your system can tolerate. \\(\\zeta\\) and \\(\\omega_n\\) are the two knobs of a second-order loop, and the sweep shows the cost of turning one without watching the other.\nNext time: In this example it is assumed that velocity is measurable. In practice, it often can’t be! That calls for an observer."
   },
   {
     "objectID": "about.html",
@@ -18,6 +60,6 @@
     "href": "index.html",
     "title": "Karthikeyan Nainar",
     "section": "",
-    "text": "Order By\n      Default\n      \n        Date - Oldest\n      \n      \n        Date - Newest\n      \n      \n        Title\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\n\nDate\n\n\n\nTitle\n\n\n\n\n\n\n\n\nNov 20, 2026\n\n\nWhat does ζ actually do? A pole placement sweep in MATLAB\n\n\n\n\n\n\nNo matching items"
+    "text": "Order By\n      Default\n      \n        Date - Oldest\n      \n      \n        Date - Newest\n      \n      \n        Title\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\n\nDate\n\n\n\nTitle\n\n\n\n\n\n\n\n\nNov 22, 2026\n\n\nHow Damping Ratio affects Overshoot?\n\n\n\n\n\n\nNo matching items"
   }
 ]

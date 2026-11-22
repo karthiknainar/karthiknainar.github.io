@@ -6,9 +6,11 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2026-11-20">
+<meta name="author" content="Karthikeyan Nainar">
+<meta name="dcterms.date" content="2026-11-22">
+<meta name="description" content="A simple second-order system, four damping ratios, and overshoots of the system reveal something interesting!">
 
-<title>What does ζ actually do? A pole placement sweep in MATLAB – Karthikeyan Nainar</title>
+<title>How Damping Ratio affects Overshoot? – Karthikeyan Nainar</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -185,18 +187,35 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">What does ζ actually do? A pole placement sweep in MATLAB</h1>
-</div>
+<h1 class="title">How Damping Ratio affects Overshoot?</h1>
+<p class="subtitle lead">A pole placement study in Matlab</p>
+  <div class="quarto-categories">
+    <div class="quarto-category">control</div>
+    <div class="quarto-category">MATLAB</div>
+    <div class="quarto-category">pole placement</div>
+  </div>
+  </div>
 
+<div>
+  <div class="description">
+    A simple second-order system, four damping ratios, and overshoots of the system reveal something interesting!
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Karthikeyan Nainar </p>
+          </div>
+  </div>
     
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 20, 2026</p>
+      <p class="date">November 22, 2026</p>
     </div>
   </div>
   
@@ -208,14 +227,137 @@ window.Quarto = {
 </header>
 
 
-<p>For a double integrator with state feedback, the desired closed-loop polynomial is</p>
-<p><span class="math display">\[s^2 + 2\zeta\omega_n s + \omega_n^2\]</span></p>
-<p>and matching coefficients gives <span class="math inline">\(K = [\omega_n^2,\ 2\zeta\omega_n]\)</span>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode matlab code-with-copy"><code class="sourceCode matlab"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">A</span> <span class="op">=</span> [<span class="fl">0</span> <span class="fl">1</span><span class="op">;</span> <span class="fl">0</span> <span class="fl">0</span>]<span class="op">;</span> <span class="va">B</span> <span class="op">=</span> [<span class="fl">0</span><span class="op">;</span> <span class="fl">1</span>]<span class="op">;</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">p</span> <span class="op">=</span> <span class="va">roots</span>([<span class="fl">1</span> <span class="fl">2</span><span class="op">*</span><span class="fl">0.8</span><span class="op">*</span><span class="fl">3</span> <span class="fl">9</span>])<span class="op">;</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">K</span> <span class="op">=</span> <span class="va">place</span>(<span class="va">A</span><span class="op">,</span> <span class="va">B</span><span class="op">,</span> <span class="va">p</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A simple second-order system, four damping ratios, and overshoots of the system reveal something interesting!</em></p>
+<p>Every control course teaches <span class="math inline">\(\zeta\)</span>, the damping ratio. Fewer courses show you what it does on a plant you can simulate in ten lines. So let’s do that.</p>
+<section id="the-plant" class="level2">
+<h2 class="anchored" data-anchor-id="the-plant">The plant</h2>
+<p>Let us consider a simple second order system: a double integrator whose transfer function is provided in <a href="#eq-sys" class="quarto-xref">Equation&nbsp;1</a>,</p>
+<p><span id="eq-sys"><span class="math display">\[
+G(s) = \frac{1}{s^2}
+\tag{1}\]</span></span></p>
+<p>This system behaves like a mass driven by a force: the state variable, position is the integral of velocity, and velocity is the integral of applied force. As no friction is assumed, this system never settles. Note that both poles of this system are located at the origin.</p>
+<p>In state-space form, let the state variable be <span class="math inline">\(x = \begin{bmatrix} x_1 &amp; x_2 \end{bmatrix}^{\top}\)</span>, where <span class="math inline">\(x_1\)</span> be the position, <span class="math inline">\(x_2 = \dot x_1\)</span> be the velocity, <span class="math inline">\(u\)</span> be the applied force, which causes acceleration (<span class="math inline">\(\dot x_2\)</span>) of the mass, and the output <span class="math inline">\(y\)</span> be the position (<span class="math inline">\(x_1\)</span>).</p>
+<p><span id="eq-state"><span class="math display">\[
+\begin{bmatrix} \dot{x_1} \\ \dot{x_2} \end{bmatrix} = \begin{bmatrix} 0 &amp; 1 \\ 0 &amp; 0 \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} + \begin{bmatrix} 0 \\ 1 \end{bmatrix} u
+\tag{2}\]</span></span></p>
+<p><span id="eq-output"><span class="math display">\[
+y = \begin{bmatrix} 1 &amp; 0 \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix}
+\tag{3}\]</span></span></p>
+<p>The state-space matrices are provided in <a href="#eq-mat" class="quarto-xref">Equation&nbsp;4</a></p>
+<p><span id="eq-mat"><span class="math display">\[
+A = \begin{bmatrix} 0 &amp; 1 \\ 0 &amp; 0 \end{bmatrix},\quad
+B = \begin{bmatrix} 0 \\ 1 \end{bmatrix},\quad
+C = \begin{bmatrix} 1 &amp; 0 \end{bmatrix}.
+\tag{4}\]</span></span></p>
+</section>
+<section id="the-controller" class="level2">
+<h2 class="anchored" data-anchor-id="the-controller">The controller</h2>
+<p>Let us apply state feedback control on <a href="#eq-sys" class="quarto-xref">Equation&nbsp;1</a>, <span class="math inline">\(u = -Kx\)</span>, in which position and velocity are measured and used as feedback signals. The block diagram of this control scheme is provided in <a href="#fig-block" class="quarto-xref">Figure&nbsp;1</a>. The closed-loop poles become the eigenvalues of <span class="math inline">\((A - BK)\)</span>. The system is controllable, which can be checked by the controllability matrix <span class="math inline">\(\begin{bmatrix} B &amp; AB \end{bmatrix}\)</span> has full rank (<span class="math inline">\(2\)</span>). Because the plant is controllable, <span class="math inline">\(K\)</span> can be chosen to put the poles at any desired place.</p>
+<div id="fig-block" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="block_diag.png" class="img-fluid figure-img" style="width:95.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-block-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Block diagram of state feedback control.
+</figcaption>
+</figure>
+</div>
+<p>For <span class="math inline">\(K = [k_1\ \ k_2]\)</span> the closed-loop characteristic polynomial is</p>
+<p><span class="math display">\[
+\det\bigl(sI - (A - BK)\bigr) = s^2 + k_2 s + k_1 .
+\]</span></p>
+<p>For a target natural frequency <span class="math inline">\(\omega_n\)</span> and damping ratio <span class="math inline">\(\zeta\)</span>, the desired polynomial is <span class="math inline">\(s^2 + 2\zeta\omega_n s + \omega_n^2\)</span>. Matching coefficients gives</p>
+<p><span id="eq-K"><span class="math display">\[
+K = \begin{bmatrix} \omega_n^2 &amp; 2\zeta\omega_n \end{bmatrix}
+\tag{5}\]</span></span></p>
+<p>The first gain acts like stiffness and the second like damping.</p>
+<p>A feed-forward gain <span class="math inline">\(N = k_1\)</span> is added so that the step response settles at the reference value set by <span class="math inline">\(r\)</span> rather than <span class="math inline">\(1/\omega_n^2\)</span>.</p>
+</section>
+<section id="the-experiment" class="level2">
+<h2 class="anchored" data-anchor-id="the-experiment">The experiment</h2>
+<p>Let us fix <span class="math inline">\(\omega_n = 3\)</span> rad/s and sweep <span class="math inline">\(\zeta = 0.3,\ 0.8,\ 1.0\)</span> and <span class="math inline">\(1.2\)</span>. The full script is on GitHub: <a href="https://github.com/karthiknainar/karthiknainar.github.io/tree/main/posts/zeta-sweep" class="uri">https://github.com/karthiknainar/karthiknainar.github.io/tree/main/posts/zeta-sweep</a></p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode matlab code-with-copy"><code class="sourceCode matlab"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">A</span> <span class="op">=</span> [<span class="fl">0</span> <span class="fl">1</span><span class="op">;</span> <span class="fl">0</span> <span class="fl">0</span>]<span class="op">;</span> <span class="va">B</span> <span class="op">=</span> [<span class="fl">0</span><span class="op">;</span> <span class="fl">1</span>]<span class="op">;</span> <span class="va">C</span> <span class="op">=</span> [<span class="fl">1</span> <span class="fl">0</span>]<span class="op">;</span> <span class="va">D</span> <span class="op">=</span> <span class="fl">0</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="va">wn</span> <span class="op">=</span> <span class="fl">3</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">for</span> <span class="va">zeta</span> <span class="op">=</span> [<span class="fl">0.3</span> <span class="fl">0.8</span> <span class="fl">1.0</span> <span class="fl">1.2</span>]</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">p</span> <span class="op">=</span> <span class="va">roots</span>([<span class="fl">1</span> <span class="fl">2</span><span class="op">*</span><span class="va">zeta</span><span class="op">*</span><span class="va">wn</span> <span class="va">wn</span><span class="op">^</span><span class="fl">2</span>])<span class="op">;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">K</span> <span class="op">=</span> <span class="va">place</span>(<span class="va">A</span><span class="op">,</span> <span class="va">B</span><span class="op">,</span> <span class="va">p</span>)<span class="op">;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">sys_cl</span> <span class="op">=</span> <span class="va">ss</span>(<span class="va">A</span> <span class="op">-</span> <span class="va">B</span><span class="op">*</span><span class="va">K</span><span class="op">,</span> <span class="va">B</span><span class="op">*</span><span class="va">K</span>(<span class="fl">1</span>)<span class="op">,</span> <span class="va">C</span><span class="op">,</span> <span class="va">D</span>)<span class="op">;</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">info</span> <span class="op">=</span> <span class="va">stepinfo</span>(<span class="va">sys_cl</span>)<span class="op">;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">fprintf</span>(<span class="ss">'zeta=%.1f  OS=%.1f%%  Ts=%.2fs\n'</span><span class="op">,</span> <span class="op">...</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="va">zeta</span><span class="op">,</span> <span class="va">info</span>.<span class="va">Overshoot</span><span class="op">,</span> <span class="va">info</span>.<span class="va">SettlingTime</span>)<span class="op">;</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fig-step" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-step-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="zetasweep.png" class="img-fluid figure-img" style="width:85.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-step-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Closed-loop step responses for <span class="math inline">\(\zeta = 0.3, 0.8, 1.0, 1.2\)</span> at <span class="math inline">\(\omega_n = 3\)</span> rad/s.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="the-results" class="level2">
+<h2 class="anchored" data-anchor-id="the-results">The results</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;"><span class="math inline">\(\zeta\)</span></th>
+<th style="text-align: center;">Poles</th>
+<th style="text-align: center;">Overshoot</th>
+<th style="text-align: center;">Settling time (2%)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">0.3</td>
+<td style="text-align: center;"><span class="math inline">\(-0.9 \pm j\,2.86\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\approx 37\%\)</span></td>
+<td style="text-align: center;">3.74 s</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">0.8</td>
+<td style="text-align: center;"><span class="math inline">\(-2.4 \pm j\,1.8\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\approx 1.5\%\)</span></td>
+<td style="text-align: center;">1.25 s</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;">1.0</td>
+<td style="text-align: center;"><span class="math inline">\(-3,\ -3\)</span></td>
+<td style="text-align: center;">0%</td>
+<td style="text-align: center;">1.94 s</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">1.2</td>
+<td style="text-align: center;"><span class="math inline">\(-1.61,\ -5.59\)</span></td>
+<td style="text-align: center;">0%</td>
+<td style="text-align: center;">2.64 s</td>
+</tr>
+</tbody>
+</table>
+<p>For an underdamped second-order system with no zeros, the overshoot is</p>
+<p><span class="math display">\[
+\text{OS} = \exp\!\left(\frac{-\pi\zeta}{\sqrt{1-\zeta^2}}\right).
+\]</span></p>
+</section>
+<section id="what-the-numbers-say" class="level2">
+<h2 class="anchored" data-anchor-id="what-the-numbers-say">What the numbers say</h2>
+<ul>
+<li><strong><span class="math inline">\(\zeta = 0.3\)</span></strong> rings. The poles sit close to the imaginary axis, so the response overshoots heavily and takes a long time to die out.</li>
+<li><strong><span class="math inline">\(\zeta = 0.8\)</span></strong> is the sweet spot here: small overshoot and the fastest settling of the four.</li>
+<li><strong><span class="math inline">\(\zeta = 1.0\)</span></strong> has no overshoot, but it is slower than <span class="math inline">\(\zeta = 0.8\)</span>. The poles are real and repeated at <span class="math inline">\(-3.0\)</span>.</li>
+<li><strong><span class="math inline">\(\zeta = 1.2\)</span></strong> has no overshoot, but it is slower than <span class="math inline">\(\zeta = 1.0\)</span>. The poles are real, and the slow one at <span class="math inline">\(-1.61\)</span> dominates the response. More damping is not always better.</li>
+</ul>
+<p>Notice that <span class="math inline">\(0.707\)</span> is <strong>not</strong> critical damping. <strong>Critical damping is <span class="math inline">\(\zeta = 1\)</span>.</strong> The value <span class="math inline">\(0.707\)</span> is where the frequency response loses its resonance peak, which gives roughly 4% overshoot. This is the reason it is a popular design target.</p>
+</section>
+<section id="the-takeaway" class="level2">
+<h2 class="anchored" data-anchor-id="the-takeaway">The takeaway</h2>
+<p>Damping is a trade-off, not a quality score. Moving the poles changes overshoot and speed together, and the right choice depends on what your system can tolerate. <span class="math inline">\(\zeta\)</span> and <span class="math inline">\(\omega_n\)</span> are the two knobs of a second-order loop, and the sweep shows the cost of turning one without watching the other.</p>
+<p><em>Next time: In this example it is assumed that velocity is measurable. In practice, it often can’t be! That calls for an observer.</em></p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -291,7 +433,7 @@ window.Quarto = {
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
+        var filterRegex = new RegExp("https:\/\/karthiknainar\.github\.io\/");
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
